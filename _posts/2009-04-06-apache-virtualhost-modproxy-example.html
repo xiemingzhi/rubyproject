@@ -1,0 +1,66 @@
+---
+title: Apache virtualhost mod_proxy example
+author: bloggerming
+tags:
+- network
+modified_time: '2015-12-03T02:09:09.947-08:00'
+blogger_id: tag:blogger.com,1999:blog-3711184356900467447.post-8226098914740571777
+blogger_orig_url: http://technoming.blogspot.com/2009/03/apache-virtualhost-modproxy-example.html
+---
+
+How to setup a virtualhost in Apache<br />
+for example<br />
+same ip<br />
+apache 80 port -&gt; tomcat 8080 port (use reverse  proxy)<br />
+apache 19080 port -&gt; tomcat 9080 port(use virtual  host)<br />
+<br />
+apache conf modifications<br />
+Listen 80<br />
+Listen  19080<br />
+<br />
+<virtualhost a="" href="http://192.168.144.179:19080">192.168.144.179:19080</virtualhost><br />
+&gt;ServerName  <a href="http://my.intranet.net/">my.intranet.net</a><br />
+ProxyPreserveHost On<br />
+ProxyPass /S010  <a href="http://192.168.144.179:9080/">http://192.168.144.179:9080/</a><br />
+ProxyPassReverse /S010  <a href="http://192.168.144.179:9080/">http://192.168.144.179:9080/</a><br />
+<br />
+remember to  include the modules for mod_proxy<br />
+<br />
+We are going reverse-proxy i.e. send the request to other application servers. apache2 is going to be the reverse proxy server, tomcat and jenkins the other application servers.<br />
+<br />
+To do this you need to enable the mod_proxy module in apache2. 
+{% highlight shell %}
+a2enmod proxy
+a2enmod proxy_http
+a2enmod proxy_ajp
+$ ls /etc/apache2/mods-enabled/
+access_compat.load    autoindex.load  mpm_prefork.conf  rewrite.load
+alias.conf            cgi.load        mpm_prefork.load  setenvif.conf
+alias.load            deflate.conf    negotiation.conf  setenvif.load
+auth_basic.load       deflate.load    negotiation.load  socache_shmcb.load
+authn_core.load       dir.conf        php5.conf         ssl.conf
+authn_file.load       dir.load        php5.load         ssl.load
+authz_core.load       drupal.conf     proxy_ajp.load    status.conf
+authz_groupfile.load  env.load        proxy.conf        status.load
+authz_host.load       filter.load     proxy.load
+authz_user.load       mime.conf       reqtimeout.conf
+autoindex.conf        mime.load       reqtimeout.load
+{% endhighlight %}
+
+Make changes to 000-default.conf
+{% highlight shell %}
+<VirtualHost *:*>
+	...
+	ProxyPass /tomcat http://tomcat:8080/
+    ProxyPassReverse /tomcat http://tomcat:8080/
+	<LocationMatch /tomcat/>
+	  Order allow,deny
+	  Allow from all
+	</LocationMatch>
+	...
+</VirtualHost>	
+{% endhighlight %}
+
+Result: http://localhost/tomcat -> http://tomcat:8080  
+
+
